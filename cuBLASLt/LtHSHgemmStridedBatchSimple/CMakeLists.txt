@@ -8,32 +8,17 @@
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 # 
 
-cmake_minimum_required(VERSION 3.10.0)
+# ---[ Check cmake version.
+cmake_minimum_required(VERSION 3.18.0 FATAL_ERROR)
 
-project(sample_cublasLt_LtHSHgemmStridedBatchSimple LANGUAGES CXX CUDA)
+# ---[ Routine name
+set(ROUTINE LtHSHgemmStridedBatchSimple)
+set(ProjectId "cublaslt_${ROUTINE}_example")
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# ---[ Project specification.
+project("${ProjectId}" LANGUAGES CXX CUDA)
 
-add_executable(${PROJECT_NAME}
-    main.cpp
-    ${PROJECT_NAME}.cu
-)
+# cuBLASLt example helpers.
+include(../cmake/cublaslt_example.cmake)
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
-    ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)
-
-set(CUDART_LIBRARY cudart)
-set(CUBLASLT_LIBRARY cublasLt)
-
-if(NOT WIN32)
-    find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-    find_library(CUBLASLT_LIBRARY cublasLt ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-endif()
-
-target_link_libraries(${PROJECT_NAME}
-    ${CUDART_LIBRARY}
-    ${CUBLASLT_LIBRARY}
-)
+add_cublaslt_example("${ProjectId}" SOURCES main.cpp sample_cublasLt_${ROUTINE}.cu)
