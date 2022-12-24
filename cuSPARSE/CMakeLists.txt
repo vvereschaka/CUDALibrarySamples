@@ -1,4 +1,4 @@
-# Copyright 1993-2023 NVIDIA Corporation.  All rights reserved.
+# Copyright 2023 NVIDIA Corporation.  All rights reserved.
 #
 # NOTICE TO LICENSEE:
 #
@@ -44,17 +44,54 @@
 # software must include, in the user documentation and internal
 # comments to the code, the above Disclaimer and U.S. Government End
 # Users Notice.
-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18)
 
-set(ROUTINE spmm_csr_batched)
-set(ProjectId "cusparse_${ROUTINE}_example")
-
-project(${ProjectId}
-        DESCRIPTION  "GPU-Accelerated Sparse Linear Algebra"
-        HOMEPAGE_URL "https://docs.nvidia.com/cuda/cusparse/index.html"
+project("cuSPARSE_examples" 
         LANGUAGES    C CUDA)
 
-# cuSPARSE example helperss
-include(../cmake/cusparse_example.cmake)
+find_package(CUDAToolkit REQUIRED)
 
-add_cusparse_example("${ProjectId}" ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.c)
+set(cuda_examples)
+list(APPEND cuda_examples 
+    axpby
+    bicgstab
+    cg
+    compression
+    coosort
+    dense2sparse_blockedell
+    dense2sparse_csr
+    gather
+    gpsvInterleavedBatch
+    graph_capture
+    rot
+    scatter
+    sddmm_csr
+    sddmm_csr_batched
+    sparse2dense_csr
+    spgemm
+    spgemm_mem
+    spgemm_reuse
+    spmm_blockedell
+    spmm_coo
+    spmm_coo_batched
+    spmm_csr
+    spmm_csr_batched
+    spmm_csr_op
+    spmv_coo
+    spmv_csr
+    spsm_coo
+    spsm_csr
+    spsv_coo
+    spsv_csr
+    spvv
+)
+
+if (NOT TARGET cusparse_examples)
+    add_custom_target(cusparse_examples)
+endif()
+
+foreach(dir ${cuda_examples})
+    message(STATUS "Adding CUDA example '${PROJECT_NAME}::${dir}' ...")
+    add_subdirectory(${dir})
+endforeach()
+

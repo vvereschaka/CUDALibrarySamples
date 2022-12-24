@@ -1,4 +1,4 @@
-# Copyright 1993-2022 NVIDIA Corporation.  All rights reserved.
+# Copyright 1993-2023 NVIDIA Corporation.  All rights reserved.
 #
 # NOTICE TO LICENSEE:
 #
@@ -44,25 +44,17 @@
 # software must include, in the user documentation and internal
 # comments to the code, the above Disclaimer and U.S. Government End
 # Users Notice.
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 set(ROUTINE scatter)
+set(ProjectId "cusparse_${ROUTINE}_example")
 
-project("${ROUTINE}_example"
+project(${ProjectId}
         DESCRIPTION  "GPU-Accelerated Sparse Linear Algebra"
         HOMEPAGE_URL "https://docs.nvidia.com/cuda/cusparse/index.html"
         LANGUAGES    C CUDA)
 
-add_executable(${ROUTINE}_example)
+# cuSPARSE example helperss
+include(../cmake/cusparse_example.cmake)
 
-target_sources(${ROUTINE}_example
-    PUBLIC ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.c
-)
-
-target_include_directories(${ROUTINE}_example
-    PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)
-
-target_link_libraries(${ROUTINE}_example
-    PUBLIC cudart cusparse
-)
+add_cusparse_example("${ProjectId}" ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.c)
