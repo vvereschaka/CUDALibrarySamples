@@ -1,4 +1,4 @@
-# Copyright 1993-2022 NVIDIA Corporation.  All rights reserved.
+# Copyright 2023 NVIDIA Corporation.  All rights reserved.
 #
 # NOTICE TO LICENSEE:
 #
@@ -44,26 +44,25 @@
 # software must include, in the user documentation and internal
 # comments to the code, the above Disclaimer and U.S. Government End
 # Users Notice.
-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18)
 
-set(ROUTINE spmma2)
-set(ProjectId "cusparselt_${ROUTINE}_example")
+project("cuSPARSELt_examples" 
+        LANGUAGES    C CXX CUDA)
 
-project("${ROUTINE}_example"
-        DESCRIPTION  "GPU-Accelerated Sparse Linear Algebra"
-        HOMEPAGE_URL "https://docs.nvidia.com/cuda/cusparse/index.html"
-        LANGUAGES    CXX CUDA)
+find_package(CUDAToolkit REQUIRED)
 
-# cuSPARSE example helperss
-include(../cmake/cusparselt_example.cmake)
+set(cuda_examples)
+list(APPEND cuda_examples 
+    spmma
+    spmma2
+)
 
-set(CMAKE_CXX_STANDARD           14)
-set(CMAKE_CXX_STANDARD_REQUIRED  ON)
-set(CMAKE_CXX_EXTENSIONS         OFF)
-set(CMAKE_CUDA_STANDARD          14)
-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_EXTENSIONS        OFF)
+if (NOT TARGET cusparse_examples)
+    add_custom_target(cusparse_examples)
+endif()
 
-add_cusparselt_example("${ProjectId}" ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp)
-add_cusparselt_example("${ProjectId}_static" ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp STATIC)
+foreach(dir ${cuda_examples})
+    message(STATUS "Adding CUDA example '${PROJECT_NAME}::${dir}' ...")
+    add_subdirectory(${dir})
+endforeach()
 

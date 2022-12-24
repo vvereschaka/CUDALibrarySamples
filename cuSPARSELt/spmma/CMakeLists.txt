@@ -1,4 +1,4 @@
-# Copyright 1993-2022 NVIDIA Corporation.  All rights reserved.
+# Copyright 1993-2023 NVIDIA Corporation.  All rights reserved.
 #
 # NOTICE TO LICENSEE:
 #
@@ -44,14 +44,18 @@
 # software must include, in the user documentation and internal
 # comments to the code, the above Disclaimer and U.S. Government End
 # Users Notice.
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 set(ROUTINE spmma)
+set(ProjectId "cusparselt_${ROUTINE}_example")
 
-project("${ROUTINE}_example"
+project(${ProjectId}
         DESCRIPTION  "GPU-Accelerated Sparse Linear Algebra"
         HOMEPAGE_URL "https://docs.nvidia.com/cuda/cusparse/index.html"
         LANGUAGES    CXX CUDA)
+
+# cuSPARSE example helperss
+include(../cmake/cusparselt_example.cmake)
 
 set(CMAKE_CXX_STANDARD           14)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
@@ -60,77 +64,5 @@ set(CMAKE_CUDA_STANDARD          14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS        OFF)
 
-string(REPLACE "/bin/nvcc" "" CUDA_TOOLKIT_PATH ${CMAKE_CUDA_COMPILER})
-if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "aarch64" AND
-    ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    set(OS_ARCH_NVRTC "sbsa-linux")
-elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64" AND
-        ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    set(OS_ARCH_NVRTC "x86_64-linux")
-endif()
-set(NVRTC_SHARED ${CUDA_TOOLKIT_PATH}/targets/${OS_ARCH_NVRTC}/lib/libnvrtc.so)
-
-# cusparselt_example check-env utilities
-function(set_with_fallback VARIABLE FALLBACK)
-  if (NOT DEFINED ${VARIABLE} OR ${VARIABLE} STREQUAL "")
-    set(${VARIABLE} $ENV{${VARIABLE}} CACHE INTERNAL ${VARIABLE})
-    if (${VARIABLE} STREQUAL "")
-      if (NOT ${FALLBACK} STREQUAL "")
-        set(${VARIABLE} $ENV{${FALLBACK}} CACHE INTERNAL ${VARIABLE})
-      endif ()
-    endif ()
-  endif ()
-endfunction()
-
-set_with_fallback(CUSPARSELT_PATH CUSPARSELT_DIR)
-if (CUSPARSELT_PATH STREQUAL "")
-    message(FATAL_ERROR "Please set the environment variables CUSPARSELT_DIR to the path of the cuSPARSELt installation.")
-endif ()
-
-message(STATUS "Using CUSPARSELT_PATH = ${CUSPARSELT_DIR}")
-
-add_executable(${ROUTINE}_example)
-add_executable(${ROUTINE}_example_static)
-
-target_sources(${ROUTINE}_example
-    PUBLIC ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp
-)
-
-target_sources(${ROUTINE}_example_static
-    PUBLIC ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp
-)
-
-target_include_directories(${ROUTINE}_example
-    PUBLIC ${CUDA_TOOLKIT_PATH}/include
-    PUBLIC ${CUSPARSELT_PATH}/include
-)
-
-target_include_directories(${ROUTINE}_example_static
-    PUBLIC ${CUDA_TOOLKIT_PATH}/include
-    PUBLIC ${CUSPARSELT_PATH}/include
-)
-
-target_link_directories(${ROUTINE}_example
-    PUBLIC ${CUSPARSELT_PATH}/lib64
-    PUBLIC ${CUDA_TOOLKIT_PATH}/lib64
-)
-
-target_link_directories(${ROUTINE}_example_static
-    PUBLIC ${CUSPARSELT_PATH}/lib64
-    PUBLIC ${CUDA_TOOLKIT_PATH}/lib64
-)
-
-target_link_libraries(${ROUTINE}_example
-    PUBLIC cudart
-    PUBLIC cusparse
-    PUBLIC libcusparseLt.so
-    PUBLIC ${NVRTC_SHARED}
-)
-
-target_link_libraries(${ROUTINE}_example_static
-    PUBLIC cudart
-    PUBLIC cusparse
-    PUBLIC libcusparseLt_static.a
-    PUBLIC ${NVRTC_SHARED}
-    PUBLIC ${CMAKE_DL_LIBS}
-)
+add_cusparselt_example("${ProjectId}" ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp)
+add_cusparselt_example("${ProjectId}_static" ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp STATIC)
