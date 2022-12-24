@@ -26,31 +26,78 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
+include(GNUInstallDirs) 
+find_package(CUDAToolkit REQUIRED)
 
-function(add_cublas_example GROUP_TARGET EXAMPLE_NAME EXAMPLE_SOURCES)
-add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
-set_property(TARGET ${EXAMPLE_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
-target_include_directories(${EXAMPLE_NAME}
-    PUBLIC
-        ${CUDA_INCLUDE_DIRS}
-)
-target_link_libraries(${EXAMPLE_NAME}
-    PUBLIC
-        cublas
-)
-set_target_properties(${EXAMPLE_NAME} PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-)
+if (NOT _ADJUST_BUILD_TYPE)
+    if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+        message(STATUS "Setting build type to 'Release' as none was specified.")
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+        set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release")
+    else()
+        message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+    endif()
+    
+    # Adjust just once.
+    set(_ADJUST_BUILD_TYPE 1 INTERNAL)
+    mark_as_advanced(_ADJUST_BUILD_TYPE)
+endif()
 
-# Install example
-install(
-    TARGETS ${EXAMPLE_NAME}
-    RUNTIME
-    DESTINATION ${cublas_examples_BINARY_INSTALL_DIR}
-    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-)
+# By default put binaries in build/bin (pre-install)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_dependencies(${GROUP_TARGET} ${EXAMPLE_NAME})
+# Installation directories
+set(CUBLAS_EXAMPLES_BINARY_INSTALL_DIR "cublas_examples/bin")
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
+endif()
+
+# Global CXX/CUDA flags
+
+# Global CXX flags/options
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Global CUDA CXX flags/options
+set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_EXTENSIONS OFF)
+
+# Debug options
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g")
+set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -O0 -g -lineinfo")
+
+# #############################################################################
+# Add a new cuSOLVER example target.
+# #############################################################################
+function(add_cublas_example EXAMPLE_NAME EXAMPLE_SOURCES)
+    add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
+    
+    set_property(TARGET ${EXAMPLE_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
+    target_include_directories(${EXAMPLE_NAME} 
+        PRIVATE 
+            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../utils"
+    )
+    target_link_libraries(${EXAMPLE_NAME}
+        PRIVATE
+            CUDA::cublas
+    )
+    set_target_properties(${EXAMPLE_NAME} PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+    )
+
+    # Install example
+    install(
+        TARGETS ${EXAMPLE_NAME}
+        RUNTIME
+        DESTINATION ${CUBLAS_EXAMPLES_BINARY_INSTALL_DIR}
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    )
+
+    if (TARGET cublas_examples)
+        add_dependencies(cublas_examples ${EXAMPLE_NAME})
+    endif()
 endfunction()
-
-add_custom_target(cublas_examples)
