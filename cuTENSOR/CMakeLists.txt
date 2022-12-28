@@ -1,7 +1,7 @@
-# 
+#
 # Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -13,10 +13,10 @@
 #  - Neither the name(s) of the copyright holder(s) nor the names of its
 #    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
 # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
@@ -25,10 +25,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 # ---[ Check cmake version.
-cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 include(GNUInstallDirs)
 
@@ -51,46 +51,53 @@ endif()
 # cuTENSOR_example dependencies
 # ##########################################
 
-find_package(CUDA 10.1 REQUIRED)
-include_directories("${CUDA_INCLUDE_DIRS}")
+find_package(CUDAToolkit 10.1 REQUIRED)
 
 if(NOT DEFINED ENV{CUTENSOR_ROOT} AND NOT DEFINED CUTENSOR_ROOT)
-  message(FATAL_ERROR "CUTENSOR_ROOT not set!")
+    message(FATAL_ERROR "CUTENSOR_ROOT not set!")
 else()
-  if(DEFINED ENV{CUTENSOR_ROOT})
-    set(CUTENSOR_ROOT "$ENV{CUTENSOR_ROOT}")
-  endif()
-  message("-- Looking for cuTENSOR in ${CUTENSOR_ROOT}")
-  if(NOT EXISTS ${CUTENSOR_ROOT})
-    message(FATAL_ERROR "Cannot find CUTENSOR_ROOT")
-  endif()
+    if(DEFINED ENV{CUTENSOR_ROOT})
+        set(CUTENSOR_ROOT "$ENV{CUTENSOR_ROOT}")
+    endif()
+    message(STATUS "Looking for cuTENSOR in ${CUTENSOR_ROOT}")
+    if(NOT EXISTS ${CUTENSOR_ROOT})
+        message(FATAL_ERROR "Please set up the cmake/environment CUTENSOR_ROOT variable with a path to the cuTENSOR installation.")
+    endif()
 endif()
 
-if(NOT TARGET cutensor)
-  add_library(cutensor SHARED IMPORTED)
-  if(WIN32)
-    set(CUTENSOR_LIBRARY_NAME "cutensor.dll")
-    set(CUTENSOR_LIBRARY_DEF "cutensor.lib")
-  else()
-    set(CUTENSOR_LIBRARY_NAME "libcutensor.so")
-  endif()
-  if((${CUDA_VERSION_MAJOR} LESS_EQUAL 10))
-      set(LIB_DIR "/lib/10.2")
-  elseif((${CUDA_VERSION_MAJOR} GREATER_EQUAL 11) AND (${CUDA_VERSION_MINOR} LESS_EQUAL 0))
-      set(LIB_DIR "/lib/11.0")
-  elseif((${CUDA_VERSION_MAJOR} GREATER_EQUAL 11) AND (${CUDA_VERSION_MINOR} GREATER_EQUAL 1))
-      set(LIB_DIR "/lib/11")
-  endif()
-  set_target_properties(cutensor PROPERTIES
-    IMPORTED_LOCATION "${CUTENSOR_ROOT}/${LIB_DIR}/${CUTENSOR_LIBRARY_NAME}"
-    IMPORTED_IMPLIB "${CUTENSOR_ROOT}/${LIB_DIR}/${CUTENSOR_LIBRARY_DEF}"
-    INTERFACE_INCLUDE_DIRECTORIES "${CUTENSOR_ROOT}/include")
+# The path suffix for cuTENSOR libraries.
+if (CUDAToolkit_VERSION VERSION_LESS 11.0)
+    set(LIB_DIR "lib/10.2")
+elseif (CUDAToolkit_VERSION VERSION_EQUAL 11.0)
+    set(LIB_DIR "lib/11.0")
+elseif (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.1)
+    set(LIB_DIR "lib/11")
 endif()
+
+# Find all cuTENSOR libraries using a path from CUTENSOR_ROOT.
+set(cutensor_lib_names "cutensor;cutensor_static;cutensorMg;cutensorMg_static")
+foreach (lib_name ${cutensor_lib_names})
+    if(NOT TARGET CUDA::${lib_name})
+        find_library(CUDA_${lib_name}_LIBRARY
+            NAMES ${lib_name}
+            HINTS ${CUTENSOR_ROOT}
+            PATH_SUFFIXES ${LIB_DIR}
+        )
+        mark_as_advanced(CUDA_${lib_name}_LIBRARY)
+
+        if (CUDA_${lib_name}_LIBRARY)
+            message(STATUS "Found CUDA::${lib_name}")
+            add_library(CUDA::${lib_name} UNKNOWN IMPORTED)
+            target_include_directories(CUDA::${lib_name} SYSTEM INTERFACE "${CUTENSOR_ROOT}/include")
+            set_property(TARGET CUDA::${lib_name} PROPERTY IMPORTED_LOCATION "${CUDA_${lib_name}_LIBRARY}")
+        endif()
+    endif()
+endforeach()
 
 # Installation directories
-if(NOT DEFINED CUTENSOR_EXAMPLE_BINARY_INSTALL_DIR)
-  message(WARNING "CUTENSOR_EXAMPLE_BINARY_INSTALL_DIR not set, setting to cutensor_example/bin")
-  set(CUTENSOR_EXAMPLE_BINARY_INSTALL_DIR "cutensor_example/bin")
+if(NOT DEFINED CUTENSOR_EXAMPLES_BINARY_INSTALL_DIR)
+  message(WARNING "CUTENSOR_EXAMPLES_BINARY_INSTALL_DIR not set, setting to cutensor_examples/bin")
+  set(CUTENSOR_EXAMPLES_BINARY_INSTALL_DIR "cutensor_examples/bin")
 endif()
 
 # ##########################################
@@ -111,6 +118,21 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
 
 # ##########################################
+# cuTENSOR_example directories
+# ##########################################
+
+# By default put binaries in build/bin (pre-install)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# ##########################################
+# Install examples
+# ##########################################
+
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
+ENDIF()
+
+# ##########################################
 # cuTENSOR_example target
 # ##########################################
 
@@ -118,27 +140,22 @@ function(add_cutensor_example GROUP_TARGET EXAMPLE_NAME EXAMPLE_SOURCES)
     list(GET EXAMPLE_SOURCES 0 EXAMPLE_MAIN_SOURCE)
     get_filename_component(EXAMPLE_TARGET ${EXAMPLE_MAIN_SOURCE} NAME_WE)
     add_executable(${EXAMPLE_TARGET} ${EXAMPLE_SOURCES})
-    target_include_directories(${EXAMPLE_TARGET}
-        PUBLIC
-            ${CUDA_INCLUDE_DIRS}
-            ${CUTENSOR_ROOT}/include
-    )
     target_link_libraries(${EXAMPLE_TARGET}
-        PUBLIC
-            cutensor
-            cudart
-            cublasLt
+        PRIVATE
+            CUDA::cutensor
+            CUDA::cublasLt
     )
-    set_target_properties(${EXAMPLE_TARGET} PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
-        CUDA_SEPARABLE_COMPILATION ON
+    set_target_properties(${EXAMPLE_TARGET}
+        PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            CUDA_SEPARABLE_COMPILATION ON
     )
 
     # Install example
     install(
         TARGETS ${EXAMPLE_TARGET}
         RUNTIME
-        DESTINATION ${CUTENSOR_EXAMPLE_BINARY_INSTALL_DIR}
+        DESTINATION ${CUTENSOR_EXAMPLES_BINARY_INSTALL_DIR}
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
@@ -156,19 +173,3 @@ add_cutensor_example(cutensor_examples "cuTENSOR.example.elementwise_binary" ele
 add_cutensor_example(cutensor_examples "cuTENSOR.example.elementwise_permute" elementwise_permute.cu)
 add_cutensor_example(cutensor_examples "cuTENSOR.example.elementwise_trinary" elementwise_trinary.cu)
 add_cutensor_example(cutensor_examples "cuTENSOR.example.reduction" reduction.cu)
-
-# ##########################################
-# cuTENSOR_example directories
-# ##########################################
-
-# By default put binaries in build/bin (pre-install)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# ##########################################
-# Install examples
-# ##########################################
-
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
-ENDIF()
-
