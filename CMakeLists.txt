@@ -49,7 +49,8 @@ cmake_minimum_required(VERSION 3.18)
 project("CUDA_Library_Samples" 
         LANGUAGES    C CXX CUDA)
 
-find_package(CUDAToolkit REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+
 
 # List of all known CUDA examples within the project.
 set(CUDA_ALL_EXAMPLE_PROJECTS "cuBLAS;cuBLASLt;cuFFT;cuFFTMp;cuRAND;cuSOLVER;cuSOLVERMp;cuSPARSE;cuSPARSELt;cuTENSOR;cuTENSORMg;MathDx;NPP;nvJPEG;nvJPEG2000;nvTIFF")
@@ -60,6 +61,11 @@ set(CUDA_ENABLE_EXAMPLE_PROJECTS "all" CACHE STRING
 if (CUDA_ENABLE_EXAMPLE_PROJECTS STREQUAL "all" )
     set(CUDA_ENABLE_EXAMPLE_PROJECTS ${CUDA_ALL_EXAMPLE_PROJECTS})
 endif() 
+
+find_package(CUDAToolkit REQUIRED)
+if ("cuTENSOR" IN_LIST CUDA_ENABLE_EXAMPLE_PROJECTS OR "cuTENSORMg" IN_LIST CUDA_ENABLE_EXAMPLE_PROJECTS)
+    find_package(cuTENSOR REQUIRED)
+endif()
 
 foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     message(STATUS "Configuring CUDA example project '${proj}' ...")

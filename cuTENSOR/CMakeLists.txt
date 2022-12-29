@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
 #
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 # ---[ Check cmake version.
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/modules)
+
 include(GNUInstallDirs)
 
 # ---[ Project specIFication.
@@ -51,48 +53,12 @@ endif()
 # cuTENSOR_example dependencies
 # ##########################################
 
-find_package(CUDAToolkit 10.1 REQUIRED)
-
-if(NOT DEFINED ENV{CUTENSOR_ROOT} AND NOT DEFINED CUTENSOR_ROOT)
-    message(FATAL_ERROR "CUTENSOR_ROOT not set!")
-else()
-    if(DEFINED ENV{CUTENSOR_ROOT})
-        set(CUTENSOR_ROOT "$ENV{CUTENSOR_ROOT}")
-    endif()
-    message(STATUS "Looking for cuTENSOR in ${CUTENSOR_ROOT}")
-    if(NOT EXISTS ${CUTENSOR_ROOT})
-        message(FATAL_ERROR "Please set up the cmake/environment CUTENSOR_ROOT variable with a path to the cuTENSOR installation.")
-    endif()
+if (NOT CUDAToolkit_FOUND)
+    find_package(CUDAToolkit 10.1 REQUIRED)
 endif()
-
-# The path suffix for cuTENSOR libraries.
-if (CUDAToolkit_VERSION VERSION_LESS 11.0)
-    set(LIB_DIR "lib/10.2")
-elseif (CUDAToolkit_VERSION VERSION_EQUAL 11.0)
-    set(LIB_DIR "lib/11.0")
-elseif (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.1)
-    set(LIB_DIR "lib/11")
+if (NOT cuTENSOR_FOUND)
+    find_package(cuTENSOR REQUIRED)
 endif()
-
-# Find all cuTENSOR libraries using a path from CUTENSOR_ROOT.
-set(cutensor_lib_names "cutensor;cutensor_static;cutensorMg;cutensorMg_static")
-foreach (lib_name ${cutensor_lib_names})
-    if(NOT TARGET CUDA::${lib_name})
-        find_library(CUDA_${lib_name}_LIBRARY
-            NAMES ${lib_name}
-            HINTS ${CUTENSOR_ROOT}
-            PATH_SUFFIXES ${LIB_DIR}
-        )
-        mark_as_advanced(CUDA_${lib_name}_LIBRARY)
-
-        if (CUDA_${lib_name}_LIBRARY)
-            message(STATUS "Found CUDA::${lib_name}")
-            add_library(CUDA::${lib_name} UNKNOWN IMPORTED)
-            target_include_directories(CUDA::${lib_name} SYSTEM INTERFACE "${CUTENSOR_ROOT}/include")
-            set_property(TARGET CUDA::${lib_name} PROPERTY IMPORTED_LOCATION "${CUDA_${lib_name}_LIBRARY}")
-        endif()
-    endif()
-endforeach()
 
 # Installation directories
 if(NOT DEFINED CUTENSOR_EXAMPLES_BINARY_INSTALL_DIR)
@@ -128,9 +94,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Install examples
 # ##########################################
 
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
-ENDIF()
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
+endif()
 
 # ##########################################
 # cuTENSOR_example target
