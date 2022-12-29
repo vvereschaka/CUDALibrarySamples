@@ -1,7 +1,7 @@
-# 
-# Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
-# 
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+#
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -13,10 +13,10 @@
 #  - Neither the name(s) of the copyright holder(s) nor the names of its
 #    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
 # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
@@ -25,10 +25,12 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 # ---[ Check cmake version.
-cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/modules)
 
 include(GNUInstallDirs)
 
@@ -51,54 +53,33 @@ endif()
 # cuTENSOR_example dependencies
 # ##########################################
 
-find_package(CUDA 10.1 REQUIRED)
-include_directories("${CUDA_INCLUDE_DIRS}")
-
-if(NOT DEFINED ENV{CUTENSOR_ROOT} AND NOT DEFINED CUTENSOR_ROOT)
-  message(FATAL_ERROR "CUTENSOR_ROOT not set!")
-else()
-  if(DEFINED ENV{CUTENSOR_ROOT})
-    set(CUTENSOR_ROOT "$ENV{CUTENSOR_ROOT}")
-  endif()
-  message("-- Looking for cuTENSOR in ${CUTENSOR_ROOT}")
-  if(NOT EXISTS ${CUTENSOR_ROOT})
-    message(FATAL_ERROR "Cannot find CUTENSOR_ROOT")
-  endif()
+if (NOT CUDAToolkit_FOUND)
+    find_package(CUDAToolkit 10.1 REQUIRED)
 endif()
-
-if((NOT TARGET cutensor) AND (NOT TARGET cutensorMg))
-  add_library(cutensorMg SHARED IMPORTED)
-  add_library(cutensor SHARED IMPORTED)
-  if(WIN32)
-    set(CUTENSORMG_LIBRARY_NAME "cutensorMg.dll")
-    set(CUTENSOR_LIBRARY_NAME "cutensor.dll")
-    set(CUTENSORMG_LIBRARY_DEF "cutensorMg.lib")
-    set(CUTENSOR_LIBRARY_DEF "cutensor.lib")
-  else()
-    set(CUTENSORMG_LIBRARY_NAME "libcutensorMg.so")
-    set(CUTENSOR_LIBRARY_NAME "libcutensor.so")
-  endif()
-  if((${CUDA_VERSION_MAJOR} LESS_EQUAL 10))
-      set(LIB_DIR "/lib/10.2")
-  elseif((${CUDA_VERSION_MAJOR} GREATER_EQUAL 11) AND (${CUDA_VERSION_MINOR} LESS_EQUAL 0))
-      set(LIB_DIR "/lib/11.0")
-  elseif((${CUDA_VERSION_MAJOR} GREATER_EQUAL 11) AND (${CUDA_VERSION_MINOR} GREATER_EQUAL 1))
-      set(LIB_DIR "/lib/11")
-  endif()
-  set_target_properties(cutensorMg PROPERTIES
-    IMPORTED_LOCATION "${CUTENSOR_ROOT}/${LIB_DIR}/${CUTENSORMG_LIBRARY_NAME}"
-    IMPORTED_IMPLIB "${CUTENSOR_ROOT}/${LIB_DIR}/${CUTENSORMG_LIBRARY_DEF}"
-    INTERFACE_INCLUDE_DIRECTORIES "${CUTENSOR_ROOT}/include")
-  set_target_properties(cutensor PROPERTIES
-    IMPORTED_LOCATION "${CUTENSOR_ROOT}/${LIB_DIR}/${CUTENSOR_LIBRARY_NAME}"
-    IMPORTED_IMPLIB "${CUTENSOR_ROOT}/${LIB_DIR}/${CUTENSOR_LIBRARY_DEF}"
-    INTERFACE_INCLUDE_DIRECTORIES "${CUTENSOR_ROOT}/include")
+if (NOT cuTENSOR_FOUND)
+    find_package(cuTENSOR REQUIRED)
 endif()
 
 # Installation directories
-if(NOT DEFINED CUTENSORMG_EXAMPLE_BINARY_INSTALL_DIR)
-  message(WARNING "CUTENSORMG_EXAMPLE_BINARY_INSTALL_DIR not set, setting to cutensormg_example/bin")
-  set(CUTENSORMG_EXAMPLE_BINARY_INSTALL_DIR "cutensormg_example/bin")
+if(NOT DEFINED CUTENSORMG_EXAMPLES_BINARY_INSTALL_DIR)
+    message(WARNING "CUTENSORMG_EXAMPLES_BINARY_INSTALL_DIR not set, setting to cutensormg_examples/bin")
+    set(CUTENSORMG_EXAMPLES_BINARY_INSTALL_DIR "cutensormg_examples/bin")
+endif()
+
+
+# ##########################################
+# cuTENSOR_example directories
+# ##########################################
+
+# By default put binaries in build/bin (pre-install)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# ##########################################
+# Install examples
+# ##########################################
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
 endif()
 
 # ##########################################
@@ -126,27 +107,22 @@ function(add_cutensormg_example GROUP_TARGET EXAMPLE_NAME EXAMPLE_SOURCES)
     list(GET EXAMPLE_SOURCES 0 EXAMPLE_MAIN_SOURCE)
     get_filename_component(EXAMPLE_TARGET ${EXAMPLE_MAIN_SOURCE} NAME_WE)
     add_executable(${EXAMPLE_TARGET} ${EXAMPLE_SOURCES})
-    target_include_directories(${EXAMPLE_TARGET}
-        PUBLIC
-            ${CUDA_INCLUDE_DIRS}
-            ${CUTENSOR_ROOT}/include
-            ${CUTENSOR_ROOT}/cutensorMg/include
-    )
     target_link_libraries(${EXAMPLE_TARGET}
-        PUBLIC
-            cutensorMg
-            cutensor
+        PRIVATE
+            CUDA::cutensorMg
+            CUDA::cutensor
     )
-    set_target_properties(${EXAMPLE_TARGET} PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
-        CUDA_SEPARABLE_COMPILATION ON
+    set_target_properties(${EXAMPLE_TARGET}
+        PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            CUDA_SEPARABLE_COMPILATION ON
     )
 
     # Install example
     install(
         TARGETS ${EXAMPLE_TARGET}
         RUNTIME
-        DESTINATION ${CUTENSOR_EXAMPLE_BINARY_INSTALL_DIR}
+        DESTINATION ${CUTENSORMG_EXAMPLES_BINARY_INSTALL_DIR}
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
@@ -157,19 +133,3 @@ add_custom_target(cutensormg_examples)
 
 add_cutensormg_example(cutensormg_examples "cuTENSORMg.example.contraction_multi_gpu" contraction_multi_gpu.cu)
 add_cutensormg_example(cutensormg_examples "cuTENSORMg.example.blog_post" blog_post.cu)
-
-# ##########################################
-# cuTENSOR_example directories
-# ##########################################
-
-# By default put binaries in build/bin (pre-install)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# ##########################################
-# Install examples
-# ##########################################
-
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
-ENDIF()
-
