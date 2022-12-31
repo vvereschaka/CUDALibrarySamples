@@ -32,16 +32,14 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <filesystem> // stdc++17
 
 #include <string.h>  // strcmpi
 #ifndef _WIN64
 #include <sys/time.h>  // timings
 #include <unistd.h>
 #endif
-#include <dirent.h>  
-#include <sys/stat.h>
 #include <sys/types.h>
-
 
 #include <cuda_runtime_api.h>
 #include <nvjpeg.h>
@@ -67,6 +65,8 @@
             exit(1);                                                            \
         }                                                                       \
     }
+
+namespace fs = std::filesystem;
 
 struct image_resize_params_t {
   std::string input_dir;
@@ -108,78 +108,48 @@ bool is_interleaved(nvjpegOutputFormat_t format)
 // -----------------------------------------------------------------------------
 int readInput(const std::string &sInputPath, std::vector<std::string> &filelist)
 {
-    int error_code = 1;
-    struct stat s;
+    int error_code = 0;
 
-    if( stat(sInputPath.c_str(), &s) == 0 )
-    {
-        if( s.st_mode & S_IFREG )
-        {
+    fs::file_status s = fs::status(sInputPath);
+    switch (s.type()) {
+        case fs::file_type::not_found:
+            std::cerr << "Error: cannot find input path " << sInputPath << std::endl;
+            error_code = 1;
+            break;
+
+        case fs::file_type::regular:
             filelist.push_back(sInputPath);
-        }
-        else if( s.st_mode & S_IFDIR )
-        {
-            // processing each file in directory
-            DIR *dir_handle;
-            struct dirent *dir;
-            dir_handle = opendir(sInputPath.c_str());
-            std::vector<std::string> filenames;
-            if (dir_handle)
-            {
-                error_code = 0;
-                while ((dir = readdir(dir_handle)) != NULL)
-                {
-                    if (dir->d_type == DT_REG)
-                    {
-                        std::string sFileName = sInputPath + dir->d_name;
-                        filelist.push_back(sFileName);
-                    }
-                    else if (dir->d_type == DT_DIR)
-                    {
-                        std::string sname = dir->d_name;
-                        if (sname != "." && sname != "..")
-                        {
-                            readInput(sInputPath + sname + "/", filelist);
-                        }
-                    }
+            break;
+
+        case fs::file_type::directory:
+            try {
+                const fs::path p(sInputPath);
+
+                for (auto const& it : fs::recursive_directory_iterator(p)) {
+                    if (it.symlink_status().type() == fs::file_type::regular)
+                        filelist.push_back(it.path().string());
                 }
-                closedir(dir_handle);
             }
-            else
-            {
-                std::cout << "Cannot open input directory: " << sInputPath << std::endl;
-                return error_code;
+            catch (fs::filesystem_error &err) {
+                std::cerr << "Error: " << err.what() << std::endl;
+                error_code = 1;
             }
-        }
-        else
-        {
-            std::cout << "Cannot open input: " << sInputPath << std::endl;
-            return error_code;
-        }
-    }
-    else
-    {
-        std::cout << "Cannot find input path " << sInputPath << std::endl;
-        return error_code;
+            break;
+
+        default:
+            std::cerr << "Error: unsupported file type for input path " << sInputPath << std::endl;
+            error_code = 1;
+            break;
     }
 
-    return 0;
+    return error_code;
 }
 
 // *****************************************************************************
 // check for inputDirExists
 // -----------------------------------------------------------------------------
 int inputDirExists(const char *pathname) {
-  struct stat info;
-  if (stat(pathname, &info) != 0) {
-    return 0;  // Directory does not exists
-  } else if (info.st_mode & S_IFDIR) {
-    // is a directory
-    return 1;
-  } else {
-    // is not a directory
-    return 0;
-  }
+    return fs::status(pathname).type() == fs::file_type::directory ? 1 : 0;
 }
 
 // *****************************************************************************

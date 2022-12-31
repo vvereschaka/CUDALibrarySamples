@@ -37,8 +37,8 @@ int decode_images(const FileData &img_data, const std::vector<size_t> &img_len,
   cudaEvent_t startEvent = NULL, stopEvent = NULL;
   float loopTime = 0; 
   
-  CHECK_CUDA(cudaEventCreate(&startEvent, cudaEventBlockingSync));
-  CHECK_CUDA(cudaEventCreate(&stopEvent, cudaEventBlockingSync));
+  CHECK_CUDA(cudaEventCreateWithFlags(&startEvent, cudaEventBlockingSync));
+  CHECK_CUDA(cudaEventCreateWithFlags(&stopEvent, cudaEventBlockingSync));
 
 
   std::vector<const unsigned char*> batched_bitstreams;

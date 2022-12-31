@@ -32,14 +32,13 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <filesystem> // stdc++17
 
 #include <string.h>  // strcmpi
 #ifndef _WIN64
 #include <sys/time.h>  // timings
 #include <unistd.h>
 #endif
-#include <dirent.h>  
-#include <sys/stat.h>
 #include <sys/types.h>
 
 
@@ -67,6 +66,7 @@
         }                                                                       \
     }
 
+namespace fs = std::filesystem;
 
 int dev_malloc(void **p, size_t s) { return (int)cudaMalloc(p, s); }
 
@@ -86,7 +86,7 @@ struct decode_per_thread_params {
   nvjpegJpegState_t dec_state_gpu;
   nvjpegBufferPinned_t pinned_buffers[pipeline_stages];
   nvjpegBufferDevice_t device_buffer;
-  nvjpegJpegStream_t  jpeg_streams[pipeline_stages]; 
+  nvjpegJpegStream_t  jpeg_streams[pipeline_stages];
   nvjpegDecodeParams_t nvjpeg_decode_params;
   nvjpegJpegDecoder_t nvjpeg_dec_cpu;
   nvjpegJpegDecoder_t nvjpeg_dec_gpu;
@@ -102,7 +102,7 @@ struct decode_params_t {
   cudaStream_t global_stream;
 
   nvjpegHandle_t nvjpeg_handle;
-  
+
   std::vector<decode_per_thread_params> nvjpeg_per_thread_data;
   nvjpegOutputFormat_t fmt;
   bool write_decoded;
@@ -115,14 +115,14 @@ int create_nvjpeg_data(nvjpegHandle_t&  nvjpeg_handle, decode_per_thread_params&
                                      "so the re-allocations won't interfere with asynchronous execution.");
    // stream for decoding
   CHECK_CUDA( cudaStreamCreateWithFlags(&params.stream, cudaStreamNonBlocking));
-  
+
   CHECK_NVJPEG(nvjpegDecoderCreate(nvjpeg_handle, NVJPEG_BACKEND_HYBRID, &params.nvjpeg_dec_cpu));
   CHECK_NVJPEG(nvjpegDecoderCreate(nvjpeg_handle, NVJPEG_BACKEND_GPU_HYBRID, &params.nvjpeg_dec_gpu));
   CHECK_NVJPEG(nvjpegDecoderStateCreate(nvjpeg_handle, params.nvjpeg_dec_cpu, &params.dec_state_cpu));
-  CHECK_NVJPEG(nvjpegDecoderStateCreate(nvjpeg_handle, params.nvjpeg_dec_gpu, &params.dec_state_gpu));  
-  
+  CHECK_NVJPEG(nvjpegDecoderStateCreate(nvjpeg_handle, params.nvjpeg_dec_gpu, &params.dec_state_gpu));
+
   CHECK_NVJPEG(nvjpegBufferDeviceCreate(nvjpeg_handle, NULL, &params.device_buffer));
-  
+
   for(int i = 0; i < pipeline_stages; i++) {
     CHECK_NVJPEG(nvjpegBufferPinnedCreate(nvjpeg_handle, NULL, &params.pinned_buffers[i]));
     CHECK_NVJPEG(nvjpegJpegStreamCreate(nvjpeg_handle, &params.jpeg_streams[i]));
@@ -137,7 +137,7 @@ int create_nvjpeg_data(nvjpegHandle_t&  nvjpeg_handle, decode_per_thread_params&
 int destroy_nvjpeg_data(decode_per_thread_params& params) {
 
   CHECK_NVJPEG(nvjpegDecodeParamsDestroy(params.nvjpeg_decode_params));
-  
+
   for(int i = 0; i < pipeline_stages; i++) {
     CHECK_NVJPEG(nvjpegJpegStreamDestroy(params.jpeg_streams[i]));
     CHECK_NVJPEG(nvjpegBufferPinnedDestroy(params.pinned_buffers[i]));
@@ -302,78 +302,48 @@ int release_buffers(std::vector<nvjpegImage_t> &ibuf) {
 // -----------------------------------------------------------------------------
 int readInput(const std::string &sInputPath, std::vector<std::string> &filelist)
 {
-    int error_code = 1;
-    struct stat s;
+    int error_code = 0;
 
-    if( stat(sInputPath.c_str(), &s) == 0 )
-    {
-        if( s.st_mode & S_IFREG )
-        {
+    fs::file_status s = fs::status(sInputPath);
+    switch (s.type()) {
+        case fs::file_type::not_found:
+            std::cerr << "Error: cannot find input path " << sInputPath << std::endl;
+            error_code = 1;
+            break;
+
+        case fs::file_type::regular:
             filelist.push_back(sInputPath);
-        }
-        else if( s.st_mode & S_IFDIR )
-        {
-            // processing each file in directory
-            DIR *dir_handle;
-            struct dirent *dir;
-            dir_handle = opendir(sInputPath.c_str());
-            std::vector<std::string> filenames;
-            if (dir_handle)
-            {
-                error_code = 0;
-                while ((dir = readdir(dir_handle)) != NULL)
-                {
-                    if (dir->d_type == DT_REG)
-                    {
-                        std::string sFileName = sInputPath + dir->d_name;
-                        filelist.push_back(sFileName);
-                    }
-                    else if (dir->d_type == DT_DIR)
-                    {
-                        std::string sname = dir->d_name;
-                        if (sname != "." && sname != "..")
-                        {
-                            readInput(sInputPath + sname + "/", filelist);
-                        }
-                    }
+            break;
+
+        case fs::file_type::directory:
+            try {
+                const fs::path p(sInputPath);
+
+                for (auto const& it : fs::recursive_directory_iterator(p)) {
+                    if (it.symlink_status().type() == fs::file_type::regular)
+                        filelist.push_back(it.path().string());
                 }
-                closedir(dir_handle);
             }
-            else
-            {
-                std::cout << "Cannot open input directory: " << sInputPath << std::endl;
-                return error_code;
+            catch (fs::filesystem_error &err) {
+                std::cerr << "Error: " << err.what() << std::endl;
+                error_code = 1;
             }
-        }
-        else
-        {
-            std::cout << "Cannot open input: " << sInputPath << std::endl;
-            return error_code;
-        }
-    }
-    else
-    {
-        std::cout << "Cannot find input path " << sInputPath << std::endl;
-        return error_code;
+            break;
+
+        default:
+            std::cerr << "Error: unsupported file type for input path " << sInputPath << std::endl;
+            error_code = 1;
+            break;
     }
 
-    return 0;
+    return error_code;
 }
 
 // *****************************************************************************
 // check for inputDirExists
 // -----------------------------------------------------------------------------
 int inputDirExists(const char *pathname) {
-  struct stat info;
-  if (stat(pathname, &info) != 0) {
-    return 0;  // Directory does not exists
-  } else if (info.st_mode & S_IFDIR) {
-    // is a directory
-    return 1;
-  } else {
-    // is not a directory
-    return 0;
-  }
+    return fs::status(pathname).type() == fs::file_type::directory ? 1 : 0;
 }
 
 // *****************************************************************************
