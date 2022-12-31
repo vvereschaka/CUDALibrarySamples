@@ -67,11 +67,11 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 if (NOT DEFINED CUSPARSELT_PATH)
-    set(CUSPARSELT_PATH $ENV{CUSPARSELT_DIR} CACHE INTERNAL "")
+    set(CUSPARSELT_PATH $ENV{CUSPARSELT_PATH} CACHE INTERNAL "")
 endif()
 
 if (CUSPARSELT_PATH STREQUAL "")
-    message(FATAL_ERROR "Please set the environment variables CUSPARSELT_DIR to the path of the cuSPARSELt installation.")
+    message(FATAL_ERROR "Please set the environment variables CUSPARSELT_PATH to the path of the cuSPARSELt installation.")
 endif ()
 
 message(STATUS "Using CUSPARSELT_PATH = ${CUSPARSELT_PATH}")
