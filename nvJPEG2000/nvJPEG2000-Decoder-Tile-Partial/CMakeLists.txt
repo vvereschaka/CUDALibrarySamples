@@ -1,5 +1,5 @@
 # 
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
 # 
 # NVIDIA CORPORATION and its licensors retain all intellectual property
 # and proprietary rights in and to this software, related documentation
@@ -7,14 +7,16 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 # 
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+# ---[ Project specIFication.
+set(PROJECT_NAME nvJPEG2000DecoderTilePartial)
+project(${PROJECT_NAME} LANGUAGES CUDA CXX)
 
-project(nvj2k_decode_tile_partial LANGUAGES CXX CUDA)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/common_example.cmake)
 
-if(NOT NVJPEG2K_PATH)
-message(FATAL_ERROR, "NVJPEG2K_PATH not set")
-endif()
+find_package(CUDAToolkit REQUIRED)
+find_package(nvJPEG2000 REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,28 +26,8 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
 
-include_directories(
-  ${NVJPEG2K_PATH}/include
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)
-
-
-SET(EXAMPLES_DESCRIPTOR_SOURCES "nvj2k_DecodeTilePartial.cpp")
-
-add_executable(nvj2k_decode_tile_partial ${EXAMPLES_DESCRIPTOR_SOURCES})
-
-find_library(NVJPEG2K_LIB
-    NAMES nvjpeg2k
-    PATHS ${NVJPEG2K_PATH}/lib64)
-
-find_library(CUDART_LIB 
-    NAMES cudart
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-
-if(UNIX)
-  set(FILESYS -lstdc++fs)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+if (UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
-target_link_libraries(nvj2k_decode_tile_partial PUBLIC ${NVJPEG2K_LIB} ${CUDART_LIB} ${FILESYS})
-
+add_nvjpeg2000_example(nvjpeg2000_examples ${PROJECT_NAME} nvj2k_DecodeTilePartial.cpp)
