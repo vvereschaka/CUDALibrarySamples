@@ -1,5 +1,5 @@
 # 
-# Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
 # 
 # NVIDIA CORPORATION and its licensors retain all intellectual property
 # and proprietary rights in and to this software, related documentation
@@ -7,40 +7,27 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 # 
-
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-
-project(nvJPEGROIDecode LANGUAGES CXX CUDA)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 # ---[ Project specIFication.
-SET(PROJECT_NAME nvJPEGROIDecode)
-PROJECT(${PROJECT_NAME} LANGUAGES CUDA CXX)
+set(PROJECT_NAME nvJPEGROIDecode)
+project(${PROJECT_NAME} LANGUAGES CUDA CXX)
 
-if(NOT DEFINED CMAKE_CUDA_STANDARD)
-    set(CMAKE_CUDA_STANDARD 11)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)    
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/common_example.cmake)
 
-set(CMAKE_CXX_STANDARD 11)
+# Global CXX flags/options
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Global CUDA CXX flags/options
+set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_EXTENSIONS OFF)
 
-include_directories(
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)
-
-
-SET(EXAMPLES_DESCRIPTOR_SOURCES "nvJPEGROIDecode.cpp")
-
-add_executable(nvJPEGROIDecode ${EXAMPLES_DESCRIPTOR_SOURCES})
-
-find_library(NVJPEG_LIB
-    NAMES nvjpeg
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-
-find_library(CUDART_LIB 
-    NAMES cudart
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-
-target_link_libraries(nvJPEGROIDecode PUBLIC ${NVJPEG_LIB} ${CUDART_LIB} pthread)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+# NOTE: add_nvjpeg_example will add a reference to Threads::Threads 
+# if a proper thread library gets existed.
+add_nvjpeg_example(jpeg_examples "${PROJECT_NAME}" nvJPEGROIDecode.cpp)
