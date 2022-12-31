@@ -44,6 +44,9 @@
 # software must include, in the user documentation and internal
 # comments to the code, the above Disclaimer and U.S. Government End
 # Users Notice.
+if (cuTENSOR_FOUND)
+    return()
+endif()
 
 if (NOT CUDAToolkit_FOUND)
     find_package(CUDAToolkit 10.1 REQUIRED)
@@ -137,9 +140,9 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(cuTENSOR
-  REQUIRED_VARS
-    CUTENSOR_ROOT_DIR
-    CUTENSOR_INCLUDE_DIR
+    REQUIRED_VARS
+        CUTENSOR_ROOT_DIR
+        CUTENSOR_INCLUDE_DIR
 )
 mark_as_advanced(CUTENSOR_INCLUDE_DIR)
 
