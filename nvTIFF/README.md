@@ -34,5 +34,5 @@ x86_64
 # Prerequisites
 - A Linux system with recent NVIDIA drivers.
 - Install the [CUDA 11.6 toolkit](https://developer.nvidia.com/cuda-downloads).
-- nvcomp for zlib support (https://developer.nvidia.com/nvcomp-download)
-
+- [nvcomp for zlib support](https://developer.nvidia.com/nvcomp-download)
+- [NVIDIA nvTiff download](https://developer.nvidia.com/nvtiff/downloads)
