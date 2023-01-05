@@ -51,30 +51,13 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Installation directories
-set(CUSOLVER_EXAMPLES_BINARY_INSTALL_DIR "cusolver_examples/bin")
+if (NOT CUSOLVER_EXAMPLES_INSTALL_PREFIX)
+    set(CUSOLVER_EXAMPLES_INSTALL_PREFIX cusolver_examples)
+endif()
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
 endif()
-
-# #############################################################################
-# Global CXX/CUDA flags
-
-# Global CXX flags/options
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-
-# Global CUDA CXX flags/options
-set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-set(CMAKE_CUDA_STANDARD 11)
-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_EXTENSIONS OFF)
-
-# Debug options
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g")
-set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -O0 -g -lineinfo")
 
 # #############################################################################
 # Add a new cuSOLVER example target.
@@ -107,7 +90,7 @@ function(add_cusolver_example EXAMPLE_NAME EXAMPLE_SOURCES)
     install(
         TARGETS ${EXAMPLE_NAME}
         RUNTIME
-        DESTINATION ${CUSOLVER_EXAMPLES_BINARY_INSTALL_DIR}
+        DESTINATION ${CUSOLVER_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
