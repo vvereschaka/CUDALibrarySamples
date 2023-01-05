@@ -1,7 +1,7 @@
-# 
+#
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
 #
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -13,10 +13,10 @@
 #  - Neither the name(s) of the copyright holder(s) nor the names of its
 #    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
 # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
@@ -25,8 +25,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-include(GNUInstallDirs) 
+#
+include(GNUInstallDirs)
 find_package(CUDAToolkit REQUIRED)
 
 if (NOT _ADJUST_BUILD_TYPE)
@@ -37,7 +37,7 @@ if (NOT _ADJUST_BUILD_TYPE)
     else()
         message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
     endif()
-    
+
     # Adjust just once.
     set(_ADJUST_BUILD_TYPE 1 INTERNAL)
     mark_as_advanced(_ADJUST_BUILD_TYPE)
@@ -47,25 +47,24 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Installation directories
-set(CUBLASLT_EXAMPLES_BINARY_INSTALL_DIR "cublaslt_examples/bin")
+if (NOT CUBLASLT_EXAMPLES_INSTALL_PREFIX)
+    set(CUBLASLT_EXAMPLES_INSTALL_PREFIX cublaslt_examples)
+endif()
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # #############################################################################
 # Add a new cuBLASLt example target.
 # #############################################################################
 function(add_cublaslt_example EXAMPLE_NAME)
-    cmake_parse_arguments(_CUBLASLT_OPT "STATIC" "" "SOURCES" ${ARGN} ) 
+    cmake_parse_arguments(_CUBLASLT_OPT "STATIC" "" "SOURCES" ${ARGN} )
 
     add_executable(${EXAMPLE_NAME} ${_CUBLASLT_OPT_SOURCES})
-    
-    target_include_directories(${EXAMPLE_NAME} 
-        PRIVATE 
+
+    target_include_directories(${EXAMPLE_NAME}
+        PRIVATE
             "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../common"
     )
     if (_CUBLASLT_OPT_STATIC)
@@ -79,14 +78,14 @@ function(add_cublaslt_example EXAMPLE_NAME)
             PRIVATE
                 CUDA::cudart
                 CUDA::cublasLt
-        )    
+        )
     endif()
-    
+
     # Install example
     install(
         TARGETS ${EXAMPLE_NAME}
         RUNTIME
-        DESTINATION ${CUBLASLT_EXAMPLES_BINARY_INSTALL_DIR}
+        DESTINATION ${CUBLASLT_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 

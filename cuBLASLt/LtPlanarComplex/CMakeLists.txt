@@ -18,6 +18,19 @@ set(ProjectId "cublaslt_${ROUTINE}_example")
 # ---[ Project specification.
 project("${ProjectId}" LANGUAGES CXX CUDA)
 
+# Global CXX/CUDA flags
+
+# Global CXX flags/options
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Global CUDA CXX flags/options
+set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_EXTENSIONS OFF)
+
 # cuBLASLt example helpers.
 include(../cmake/cublaslt_example.cmake)
 
