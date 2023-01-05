@@ -124,8 +124,9 @@ void spmg(dim_t fft, gpus_t gpus, cpudata_t &h_data_in, cpudata_t &h_data_out,
 
     // Create the plan
     // With multiple gpus, worksize will contain multiple sizes
-    size_t workspace_sizes[gpus.size()];
+    size_t *workspace_sizes = new size_t[gpus.size()];
     CUFFT_CALL(cufftMakePlan3d(plan, fft[0], fft[1], fft[2], CUFFT_C2C, workspace_sizes));
+    delete [] workspace_sizes;
 
     cudaLibXtDesc *indesc;
 
