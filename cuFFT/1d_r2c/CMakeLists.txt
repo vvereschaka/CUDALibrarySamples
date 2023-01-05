@@ -1,4 +1,4 @@
-# Copyright 1993-2021 NVIDIA Corporation.  All rights reserved.
+# Copyright 1993-2023 NVIDIA Corporation.  All rights reserved.
 #
 # NOTICE TO LICENSEE:
 #
@@ -39,38 +39,70 @@
 # Any use of the Licensed Deliverables in individual and commercial software
 # must include, in the user documentation and internal comments to the code, the
 # above Disclaimer and U.S. Government End Users Notice.
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+
+include(GNUInstallDirs)
+
+# Initialize before project definition.
+# https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html
+if(CMAKE_CUDA_ARCHITECTURES LESS 60)
+    set(CMAKE_CUDA_ARCHITECTURES 60 70 75 80 86)
+endif()
 
 set(ROUTINE 1d_r2c)
 
 project(
-  "${ROUTINE}_example"
-  DESCRIPTION "GPU-Accelerated Fast Fourier Transforms"
-  HOMEPAGE_URL "https://docs.nvidia.com/cuda/cufft/index.html"
-  LANGUAGES CXX CUDA)
+    "${ROUTINE}_example"
+    DESCRIPTION "GPU-Accelerated Fast Fourier Transforms"
+    HOMEPAGE_URL "https://docs.nvidia.com/cuda/cufft/index.html"
+    LANGUAGES CXX CUDA)
 
 find_package(CUDAToolkit REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "")
-  set(CMAKE_BUILD_TYPE Release)
-endif()
+set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_EXTENSIONS OFF)
 
-if(CMAKE_CUDA_ARCHITECTURES LESS 60)
-  set(CMAKE_CUDA_ARCHITECTURES 60 70 75 80 86)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Specifies the build type on single-configuration generators.")
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Installation directories
+if (NOT CUFFT_EXAMPLES_INSTALL_PREFIX)
+    set(CUFFT_EXAMPLES_INSTALL_PREFIX cufft_examples)
+endif()
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
+endif()
+
 add_executable(${ROUTINE}_example)
 
 target_include_directories(${ROUTINE}_example
-                           PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} 
-                           ${CMAKE_SOURCE_DIR}/../utils)
+                           PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+                           ${CMAKE_CURRENT_LIST_DIR}/../utils)
 
 target_sources(${ROUTINE}_example
                PRIVATE ${PROJECT_SOURCE_DIR}/${ROUTINE}_example.cpp)
 
 target_link_libraries(${ROUTINE}_example PRIVATE CUDA::cufft CUDA::cudart)
+
+install(
+    TARGETS ${ROUTINE}_example
+    RUNTIME
+    DESTINATION ${CUFFT_EXAMPLES_INSTALL_PREFIX}/bin
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+)
+
+if (NOT TARGET cufft_examples)
+    add_custom_target(cufft_examples)
+endif()
+
+add_dependencies(cufft_examples ${ROUTINE}_example)
