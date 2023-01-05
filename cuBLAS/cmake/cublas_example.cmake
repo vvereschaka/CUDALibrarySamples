@@ -1,7 +1,7 @@
-# 
+#
 # Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
 #
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -13,10 +13,10 @@
 #  - Neither the name(s) of the copyright holder(s) nor the names of its
 #    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
 # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
@@ -25,8 +25,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-include(GNUInstallDirs) 
+#
+include(GNUInstallDirs)
 find_package(CUDAToolkit REQUIRED)
 
 if (NOT _ADJUST_BUILD_TYPE)
@@ -37,7 +37,7 @@ if (NOT _ADJUST_BUILD_TYPE)
     else()
         message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
     endif()
-    
+
     # Adjust just once.
     set(_ADJUST_BUILD_TYPE 1 INTERNAL)
     mark_as_advanced(_ADJUST_BUILD_TYPE)
@@ -47,38 +47,23 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Installation directories
-set(CUBLAS_EXAMPLES_BINARY_INSTALL_DIR "cublas_examples/bin")
+if (NOT CUBLAS_EXAMPLES_INSTALL_PREFIX)
+    set(CUBLAS_EXAMPLES_INSTALL_PREFIX cublas_examples)
+endif()
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
 endif()
 
-# Global CXX/CUDA flags
-
-# Global CXX flags/options
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Global CUDA CXX flags/options
-set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
-set(CMAKE_CUDA_STANDARD 11)
-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_EXTENSIONS OFF)
-
-# Debug options
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g")
-set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -O0 -g -lineinfo")
-
 # #############################################################################
-# Add a new cuSOLVER example target.
+# Add a new cuBLAS example target.
 # #############################################################################
 function(add_cublas_example EXAMPLE_NAME EXAMPLE_SOURCES)
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
-    
+
     set_property(TARGET ${EXAMPLE_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
-    target_include_directories(${EXAMPLE_NAME} 
-        PRIVATE 
+    target_include_directories(${EXAMPLE_NAME}
+        PRIVATE
             "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../utils"
     )
     target_link_libraries(${EXAMPLE_NAME}
@@ -93,7 +78,7 @@ function(add_cublas_example EXAMPLE_NAME EXAMPLE_SOURCES)
     install(
         TARGETS ${EXAMPLE_NAME}
         RUNTIME
-        DESTINATION ${CUBLAS_EXAMPLES_BINARY_INSTALL_DIR}
+        DESTINATION ${CUBLAS_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 

@@ -1,7 +1,7 @@
-# 
+#
 # Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
 #
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
@@ -13,10 +13,10 @@
 #  - Neither the name(s) of the copyright holder(s) nor the names of its
 #    contributors may be used to endorse or promote products derived
 #    from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 # HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
 # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
@@ -25,7 +25,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 
 # ---[ Check cmake version.
 cmake_minimum_required(VERSION 3.18.0 FATAL_ERROR)
@@ -33,6 +33,26 @@ cmake_minimum_required(VERSION 3.18.0 FATAL_ERROR)
 # ---[ Routine name
 set(ROUTINE trsmBatched)
 set(ProjectId "cublas_${ROUTINE}_example")
+
+# #############################################################################
+# Global CXX/CUDA flags
+
+# Global CXX flags/options
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Global CUDA CXX flags/options
+set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_EXTENSIONS OFF)
+
+# Common Debug options for all projects.
+if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g")
+endif()
+set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -O0 -g -lineinfo")
 
 # ---[ Project specification.
 project("${ProjectId}" LANGUAGES C CXX CUDA)
