@@ -47,7 +47,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
 endif()
 
 # cuFFTDx Examples project
-project(cufftdx_examples LANGUAGES CXX CUDA)
+project(cufftdx_block_fft_examples LANGUAGES CXX CUDA)
 
 # Find cuFFTDx from mathDx package
 find_package(mathdx REQUIRED COMPONENTS cufftdx CONFIG)
