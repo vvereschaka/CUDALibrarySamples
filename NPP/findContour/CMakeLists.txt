@@ -1,81 +1,91 @@
-# 
-# Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
-# 
+#
+# Copyright (c) 2019-2023, NVIDIA CORPORATION.  All rights reserved.
+#
 # NVIDIA CORPORATION and its licensors retain all intellectual property
 # and proprietary rights in and to this software, related documentation
 # and any modifications thereto. Any use, reproduction, disclosure or
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
-# 
+#
 # ---[ Check cmake version.
-CMAKE_MINIMUM_REQUIRED(VERSION 3.10.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
-INCLUDE(GNUInstallDirs)
+include(GNUInstallDirs)
 
 # ---[ Project specIFication.
-SET(PROJECT_NAME findContour)
+set(ROUTINE findContour)
 
-PROJECT(${PROJECT_NAME} LANGUAGES CUDA CXX)
+project("${ROUTINE}_example" LANGUAGES CUDA CXX)
 
-if(NOT DEFINED CMAKE_CUDA_STANDARD)
-    set(CMAKE_CUDA_STANDARD 11)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)    
+find_package(CUDAToolkit REQUIRED)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_EXTENSIONS OFF)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Specifies the build type on single-configuration generators.")
 endif()
 
-include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}) 
-link_directories(${CMAKE_CUDA_INCLUDE_DIRS})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-if (UNIX)
-    find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-    find_library(NPPIF_LIBRARY nppif ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-    find_library(NPPC_LIBRARY nppc ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-    find_library(NPPISU_LIBRARY nppisu ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-    find_library(CULIBOS culibos ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-endif (UNIX)
-
-
-if (MSVC OR WIN32 OR MSYS)
-    MESSAGE( STATUS "CMAKE_CUDA_COMPILER:         " ${CMAKE_CUDA_COMPILER} )
-    set(CUDART_LIBRARY ${CUDA_LIBRARY_PATH}/cudart.lib)
-    set(NPPIF_LIBRARY ${CUDA_LIBRARY_PATH}/nppif.lib)
-    set(NPPC_LIBRARY ${CUDA_LIBRARY_PATH}/nppc.lib)
-    set(NPPISU_LIBRARY ${CUDA_LIBRARY_PATH}/nppisu.lib)
+# Installation directories
+if (NOT NPP_EXAMPLES_INSTALL_PREFIX)
+    set(NPP_EXAMPLES_INSTALL_PREFIX "npp_examples")
 endif()
 
-PROJECT(${PROJECT_NAME} C CXX CUDA)
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
+endif()
 
-# ---[ Use the default installation path if not set.
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+add_executable(${ROUTINE}_example ${ROUTINE}.cpp)
 
-# ---[ Build type
-IF(NOT CMAKE_BUILD_TYPE) 
-    SET(CMAKE_BUILD_TYPE Develop)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+set_source_files_properties(${ROUTINE}.cpp
+    PROPERTIES
+        LANGUAGE CUDA
+)
 
-SET(EXAMPLES_DESCRIPTOR_SOURCES "findContour.cpp")
-ADD_EXECUTABLE(${PROJECT_NAME} ${EXAMPLES_DESCRIPTOR_SOURCES})
-SET_SOURCE_FILES_PROPERTIES(${EXAMPLES_DESCRIPTOR_SOURCES} PROPERTIES LANGUAGE CUDA)
-TARGET_COMPILE_FEATURES(${PROJECT_NAME} PUBLIC cxx_std_11)
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES CUDA_SEPERABLE_COMPILATION ON)
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-if (UNIX)
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC ${CUDART_LIBRARY} ${NPPIF_LIBRARY} ${NPPC_LIBRARY} ${NPPISU_LIBRARY} ${CULIBOS})
-endif (UNIX)
-
-if(MSVC OR WIN32 OR MSYS)
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC ${CUDART_LIBRARY} ${NPPIF_LIBRARY} ${NPPC_LIBRARY} ${NPPISU_LIBRARY} ${CULIBOS})
-endif(MSVC OR WIN32 OR MSYS)
+set_target_properties(${ROUTINE}_example
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+        CUDA_SEPERABLE_COMPILATION ON
+)
 
 if(APPLE)
-  # We need to add the path to the driver (libcuda.dylib) as an rpath, 
-  # so that the static cuda runtime can find it at runtime.
-  set_property(TARGET ${PROJECT_NAME} 
-               PROPERTY
-               BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+    # We need to add the path to the driver (libcuda.dylib) as an rpath,
+    # so that the static cuda runtime can find it at runtime.
+    set_target_properties(${ROUTINE}_example
+        PROPERTIES
+            BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+    )
 endif(APPLE)
 
-INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
+target_link_libraries(${ROUTINE}_example
+    PRIVATE
+        CUDA::nppif
+        CUDA::nppc
+        CUDA::nppisu
+        CUDA::cudart
+)
 
+install(
+    TARGETS ${ROUTINE}_example
+    RUNTIME
+    DESTINATION ${NPP_EXAMPLES_INSTALL_PREFIX}/bin
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+)
+install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
+    DESTINATION ${NPP_EXAMPLES_INSTALL_PREFIX}
+)
+
+if (NOT TARGET npp_examples)
+    add_custom_target(npp_examples)
+endif()
+
+add_dependencies(npp_examples ${ROUTINE}_example)
