@@ -91,6 +91,18 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
             ${CUSPARSELT_PATH}/include
     )
 
+    if (_CUPARSELT_OPT_STATIC)
+        target_link_libraries(${EXAMPLE_NAME}
+            PRIVATE
+                cusparseLt_static
+        )
+    else()
+        target_link_libraries(${EXAMPLE_NAME}
+            PRIVATE
+                cusparseLt
+        )
+    endif()
+
     # Common libraries
     target_link_libraries(${EXAMPLE_NAME}
         PRIVATE
@@ -98,6 +110,13 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
             CUDA::cusparse
             CUDA::nvrtc
     )
+
+    if(WIN32)
+        target_link_directories(${EXAMPLE_NAME}
+            PRIVATE
+                ${CUSPARSELT_PATH}/lib
+        )
+    endif()
 
     if (UNIX)
         target_link_directories(${EXAMPLE_NAME}
@@ -109,25 +128,6 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
         target_link_libraries(${EXAMPLE_NAME}
             PUBLIC
                 ${CMAKE_DL_LIBS}
-        )
-    endif()
-
-    if(WIN32)
-        target_link_directories(${EXAMPLE_NAME}
-            PRIVATE
-                ${CUSPARSELT_PATH}/lib
-        )
-    endif()
-
-    if (_CUPARSELT_OPT_STATIC)
-        target_link_libraries(${EXAMPLE_NAME}
-            PRIVATE
-                cusparseLt_static
-        )
-    else()
-        target_link_libraries(${EXAMPLE_NAME}
-            PRIVATE
-                cusparseLt
         )
     endif()
 
