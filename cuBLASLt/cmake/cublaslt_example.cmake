@@ -65,7 +65,7 @@ function(add_cublaslt_example EXAMPLE_NAME)
 
     target_include_directories(${EXAMPLE_NAME}
         PRIVATE
-            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../common"
+            "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../Common"
     )
     if (_CUBLASLT_OPT_STATIC)
         target_link_libraries(${EXAMPLE_NAME}
