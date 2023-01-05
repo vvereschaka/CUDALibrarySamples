@@ -25,8 +25,8 @@ where `A`, `B`, `C` are dense matrices
     ```bash
     mkdir build
     cd build
-    cmake ..
-    make
+    cmake -G "Unix Makefiles" -DCUSPARSELT_PATH=<path-to-cusparcelt-root> ..
+    cmake --build .
     ```
 
 ## Support
@@ -41,4 +41,4 @@ where `A`, `B`, `C` are dense matrices
 
 * [CUDA 11.2 toolkit](https://developer.nvidia.com/cuda-downloads) (or above) and compatible driver (see [CUDA Driver Release Notes](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions)).
 * [cusparseLt](https://developer.nvidia.com/cusparselt/downloads)
-* [CMake 3.9](https://cmake.org/download/) or above
+* [CMake 3.18](https://cmake.org/download/) or above

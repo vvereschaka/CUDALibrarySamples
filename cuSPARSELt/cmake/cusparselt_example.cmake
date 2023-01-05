@@ -26,15 +26,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-include(GNUInstallDirs) 
+include(GNUInstallDirs)
 find_package(CUDAToolkit REQUIRED)
 
 # Adjust custom build type for the cuSPARSELt examples.
 #
-# cuSPARSELt libraries requires matching of some values during linking 
+# cuSPARSELt libraries requires matching of some values during linking
 # on Windows platform using VC. So we need to use Release build type
 # for the examples on Windows becase the cuPARSELt libraries are built as Release.
-# see: "error LNK2038: mismatch detected for ..." 
+# see: "error LNK2038: mismatch detected for ..."
 
 if (DEFINED CUSPARSELT_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE ${CUSPARSELT_BUILD_TYPE})
@@ -60,10 +60,12 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Installation directories
-set(CUSPARSELT_EXAMPLES_BINARY_INSTALL_DIR "cusparselt_examples/bin")
+if (NOT CUSPARSELT_EXAMPLES_INSTALL_PREFIX)
+    set(CUSPARSELT_EXAMPLES_INSTALL_PREFIX cusparselt_examples)
+endif()
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
 endif()
 
 if (NOT DEFINED CUSPARSELT_PATH)
@@ -84,35 +86,38 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
 
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
 
+    target_include_directories(${EXAMPLE_NAME}
+        PRIVATE
+            ${CUSPARSELT_PATH}/include
+    )
+
     # Common libraries
     target_link_libraries(${EXAMPLE_NAME}
         PRIVATE
             CUDA::cudart
             CUDA::cusparse
             CUDA::nvrtc
-        PUBLIC
-            ${CMAKE_DL_LIBS}
     )
 
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        target_link_directories(${EXAMPLE_NAME} 
+    if (UNIX)
+        target_link_directories(${EXAMPLE_NAME}
             PRIVATE
                 ${CUSPARSELT_PATH}/lib
                 ${CUSPARSELT_PATH}/lib64   # Just in case
         )
-    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        target_link_directories(${EXAMPLE_NAME} 
+
+        target_link_libraries(${EXAMPLE_NAME}
+            PUBLIC
+                ${CMAKE_DL_LIBS}
+        )
+    endif()
+
+    if(WIN32)
+        target_link_directories(${EXAMPLE_NAME}
             PRIVATE
                 ${CUSPARSELT_PATH}/lib
         )
-    else()
-        message(FATAL_ERROR "cuPARSELt: unsupported OS '${CMAKE_SYSTEM_NAME}'.")
     endif()
-    
-    target_include_directories(${EXAMPLE_NAME} 
-        PRIVATE
-            ${CUSPARSELT_PATH}/include
-    )
 
     if (_CUPARSELT_OPT_STATIC)
         target_link_libraries(${EXAMPLE_NAME}
@@ -130,7 +135,7 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
     install(
         TARGETS ${EXAMPLE_NAME}
         RUNTIME
-        DESTINATION ${CUSPARSELT_EXAMPLES_BINARY_INSTALL_DIR}
+        DESTINATION ${CUSPARSELT_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
