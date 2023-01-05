@@ -53,7 +53,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # List of all known CUDA examples within the project.
-set(CUDA_ALL_EXAMPLE_PROJECTS "cuBLAS;cuBLASLt;cuFFT;cuFFTMp;cuRAND;cuSOLVER;cuSOLVERMp;cuSPARSE;cuSPARSELt;cuTENSOR;cuTENSORMg;MathDx;NPP;nvJPEG;nvJPEG2000;nvTIFF")
+# Exculed because of missed CMakeLists.txt file: cuFFTMp; cuSOLVERMp
+set(CUDA_ALL_EXAMPLE_PROJECTS "cuBLAS;cuBLASLt;cuFFT;cuRAND;cuSOLVER;cuSPARSE;cuSPARSELt;cuTENSOR;cuTENSORMg;MathDx;NPP;nvJPEG;nvJPEG2000;nvTIFF")
 # Specify 'all' examples by default.
 set(CUDA_ENABLE_EXAMPLE_PROJECTS "all" CACHE STRING
     "Semicolon-separated list of projects to build (${CUDA_ALL_EXAMPLE_PROJECTS}), or \"all\".")
@@ -122,6 +123,28 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
         )
     endif()
 
+    if (proj STREQUAL "cuFFT")
+        if (NOT TARGET cufft_examples)
+            add_custom_target(cufft_examples)
+        endif()
+
+        add_cuda_examples(${proj}
+            1d_c2c 1d_mgpu_c2c 1d_r2c 2d_c2r 3d_c2c 3d_mgpu_c2c 3d_mgpu_r2c_c2r
+        )
+    endif()
+
+    if (proj STREQUAL "cuRAND")
+        if (NOT TARGET curand_examples)
+            add_custom_target(curand_examples)
+        endif()
+
+        add_cuda_examples(${proj}
+            Host/mrg32k3a Host/mt19937 Host/mtgp32 Host/philox
+            Host/scrambled_sobol32 Host/scrambled_sobol64
+            Host/sobol32 Host/sobol64 Host/xorwow
+        )
+    endif()
+
     if (proj STREQUAL "cuSOLVER")
         # cuSOLVER example helpers
         include(${proj}/cmake/cusolver_example.cmake)
@@ -166,6 +189,31 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
         find_package(cuTENSOR REQUIRED)
 
         add_cuda_examples(${proj})
+    endif()
+
+    #NOTE: MSVC is not supported yet.
+    if (NOT MSVC AND proj STREQUAL "MathDx")
+        if (NOT TARGET mathdx_examples)
+            add_custom_target(mathdx_examples)
+        endif()
+
+        add_cuda_examples(${proj}
+            cuFFTDx/block_fft
+            cuFFTDx/convolution
+        )
+    endif()
+
+    if (proj STREQUAL "NPP")
+        if (NOT TARGET npp_examples)
+            add_custom_target(npp_examples)
+        endif()
+
+        add_cuda_examples(${proj}
+            batchedLabelMarkersAndCompression
+            distanceTransform
+            findContour
+            watershedSegmentation
+        )
     endif()
 
     if (proj STREQUAL "nvJPEG")
