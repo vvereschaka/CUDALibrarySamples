@@ -53,8 +53,6 @@
 #include <sys/time.h>  // timings
 #include <unistd.h>
 #endif
-#include <dirent.h>  
-#include <sys/stat.h>
 #include <sys/types.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
