@@ -146,15 +146,23 @@ mark_as_advanced(NVJPEG2000_INCLUDE_DIR)
 
 if (nvJPEG2000_FOUND)
     # Find all nvJPEG2000 libraries.
-    set(cutensor_lib_names "nvjpeg2k;nvjpeg2k_static")
-    foreach (lib_name ${cutensor_lib_names})
+    set(lib_names "nvjpeg2k;nvjpeg2k_static")
+    foreach (lib_name ${lib_names})
         if(NOT TARGET CUDA::${lib_name})
             find_library(CUDA_${lib_name}_LIBRARY
                 NAMES ${lib_name}
                 HINTS ${NVJPEG2000_ROOT_DIR}
                 PATH_SUFFIXES lib64 lib
             )
-            mark_as_advanced(CUDA_${lib_name}_LIBRARY)
+
+            if (WIN32)
+                find_file(CUDA_${lib_name}_dll_LIBRARY
+                    NAMES ${lib_name}_0.dll
+                    PATHS ${NVJPEG2000_ROOT_DIR}
+                    PATH_SUFFIXES lib64 lib
+                    NO_DEFAULT_PATH
+                )
+            endif()
 
             if (CUDA_${lib_name}_LIBRARY)
                 mark_as_advanced(CUDA_${lib_name}_LIBRARY)
@@ -165,10 +173,28 @@ if (nvJPEG2000_FOUND)
                 endif()
 
                 message(STATUS "Found CUDA::${lib_name}")
-                add_library(CUDA::${lib_name} UNKNOWN IMPORTED)
+                if (CUDA_${lib_name}_dll_LIBRARY)
+                    add_library(CUDA::${lib_name} SHARED IMPORTED)
+                else()
+                    add_library(CUDA::${lib_name} UNKNOWN IMPORTED)
+                endif()
                 target_include_directories(CUDA::${lib_name} SYSTEM INTERFACE "${NVJPEG2000_INCLUDE_DIR}")
                 target_link_directories(CUDA::${lib_name} INTERFACE "${NVJPEG2000_LIBRARY_DIR}")
-                set_property(TARGET CUDA::${lib_name} PROPERTY IMPORTED_LOCATION "${CUDA_${lib_name}_LIBRARY}")
+                set_target_properties(CUDA::${lib_name}
+                    PROPERTIES
+                        IMPORTED_LOCATION "${CUDA_${lib_name}_LIBRARY}"
+                        INTERFACE_LINK_LIBRARIES "${lib_name}"
+                )
+                if (CUDA_${lib_name}_dll_LIBRARY)
+                    mark_as_advanced(CUDA_${lib_name}_dll_LIBRARY)
+
+                    set_target_properties(CUDA::${lib_name}
+                        PROPERTIES
+                            IMPORTED_LOCATION ${CUDA_${lib_name}_dll_LIBRARY}
+                            IMPORTED_IMPLIB "${CUDA_${lib_name}_LIBRARY}"
+                            INTERFACE_LINK_LIBRARIES "${lib_name}"
+                    )
+                endif()
             endif()
         endif()
     endforeach()
