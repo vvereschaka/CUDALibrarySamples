@@ -60,8 +60,8 @@ endif()
 if (NOT DEFINED NVJPEG_EXAMPLES_INSTALL_PREFIX)
     set(NVJPEG_EXAMPLES_INSTALL_PREFIX nvjpeg_examples)
 endif()
-if (NOT DEFINED NVJPEG2000_EXAMPLES_INSYALL_PREFIX)
-    set(NVJPEG2000_EXAMPLES_INSYALL_PREFIX nvjpeg2000_examples)
+if (NOT DEFINED NVJPEG2000_EXAMPLES_INSTALL_PREFIX)
+    set(NVJPEG2000_EXAMPLES_INSTALL_PREFIX nvjpeg2000_examples)
 endif()
 if (NOT DEFINED NVTIFF_EXAMPLES_INSTALL_PREFIX)
     set(NVTIFF_EXAMPLES_INSTALL_PREFIX nvtiff_examples)
@@ -145,13 +145,22 @@ function(add_nvjpeg2000_example GROUP_TARGET EXAMPLE_NAME EXAMPLE_SOURCES)
     install(
         TARGETS ${EXAMPLE_NAME}
         RUNTIME
-        DESTINATION ${NVJPEG2000_EXAMPLES_INSYALL_PREFIX}/bin
+        DESTINATION ${NVJPEG2000_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
+    # CMake cannot install the DLL files from the imported library targets before version 3.21.
+    # Just extract the dll file path from the target properties and install it as a regular file.
+    if (WIN32)
+        get_target_property(nvjpeg2k_dll CUDA::nvjpeg2k IMPORTED_LOCATION)
+        install(FILES ${nvjpeg2k_dll}
+            DESTINATION ${NVJPEG2000_EXAMPLES_INSTALL_PREFIX}/bin
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+        )
+    endif()
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/images)
         install(
             DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/images
-            DESTINATION ${NVJPEG2000_EXAMPLES_INSYALL_PREFIX}
+            DESTINATION ${NVJPEG2000_EXAMPLES_INSTALL_PREFIX}
         )
     endif()
 

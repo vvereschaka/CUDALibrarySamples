@@ -28,6 +28,7 @@
 #
 include(GNUInstallDirs)
 find_package(CUDAToolkit REQUIRED)
+find_package(cuSPARSELt REQUIRED)
 
 # Adjust custom build type for the cuSPARSELt examples.
 #
@@ -68,16 +69,6 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "" FORCE)
 endif()
 
-if (NOT DEFINED CUSPARSELT_PATH)
-    set(CUSPARSELT_PATH $ENV{CUSPARSELT_PATH} CACHE INTERNAL "")
-endif()
-
-if (CUSPARSELT_PATH STREQUAL "")
-    message(FATAL_ERROR "Please set the environment variables CUSPARSELT_PATH to the path of the cuSPARSELt installation.")
-endif ()
-
-message(STATUS "Using CUSPARSELT_PATH = ${CUSPARSELT_PATH}")
-
 # #############################################################################
 # Add a new cuSOLVER example target.
 # #############################################################################
@@ -86,20 +77,23 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
 
     add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
 
-    target_include_directories(${EXAMPLE_NAME}
-        PRIVATE
-            ${CUSPARSELT_PATH}/include
-    )
-
     if (_CUPARSELT_OPT_STATIC)
+        target_include_directories(${EXAMPLE_NAME}
+            PRIVATE
+                CUDA::cusparseLt_static
+        )
         target_link_libraries(${EXAMPLE_NAME}
             PRIVATE
-                cusparseLt_static
+                CUDA::cusparseLt_static
         )
     else()
+        target_include_directories(${EXAMPLE_NAME}
+            PRIVATE
+                CUDA::cusparseLt
+        )
         target_link_libraries(${EXAMPLE_NAME}
             PRIVATE
-                cusparseLt
+                CUDA::cusparseLt
         )
     endif()
 
@@ -111,20 +105,7 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
             CUDA::nvrtc
     )
 
-    if(WIN32)
-        target_link_directories(${EXAMPLE_NAME}
-            PRIVATE
-                ${CUSPARSELT_PATH}/lib
-        )
-    endif()
-
     if (UNIX)
-        target_link_directories(${EXAMPLE_NAME}
-            PRIVATE
-                ${CUSPARSELT_PATH}/lib
-                ${CUSPARSELT_PATH}/lib64   # Just in case
-        )
-
         target_link_libraries(${EXAMPLE_NAME}
             PUBLIC
                 ${CMAKE_DL_LIBS}
@@ -138,8 +119,17 @@ function(add_cusparselt_example EXAMPLE_NAME EXAMPLE_SOURCES)
         DESTINATION ${CUSPARSELT_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
+    # CMake cannot install the DLL files from the imported library targets before version 3.21.
+    # Just extract the dll file path from the target properties and install it as a regular file.
+    if (WIN32 AND NOT _CUPARSELT_OPT_STATIC)
+        get_target_property(cuparseLt_dll CUDA::cusparseLt IMPORTED_LOCATION)
+        install(FILES ${cuparseLt_dll}
+            DESTINATION ${CUSPARSELT_EXAMPLES_INSTALL_PREFIX}/bin
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+        )
+    endif()
 
-    if (TARGET cusparselt_examples)
-        add_dependencies(cusparselt_examples ${EXAMPLE_NAME})
+    if (TARGET cusparselt-examples)
+        add_dependencies(cusparselt-examples ${EXAMPLE_NAME})
     endif()
 endfunction()
