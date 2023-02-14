@@ -80,7 +80,7 @@ function(add_cusparse_example EXAMPLE_NAME EXAMPLE_SOURCES)
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
-    if (TARGET cusparse_examples)
-        add_dependencies(cusparse_examples ${EXAMPLE_NAME})
+    if (TARGET cusparse-examples)
+        add_dependencies(cusparse-examples ${EXAMPLE_NAME})
     endif()
 endfunction()

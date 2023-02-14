@@ -123,18 +123,27 @@ function(add_cutensor_example GROUP_TARGET EXAMPLE_NAME EXAMPLE_SOURCES)
         DESTINATION ${CUTENSOR_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
+    # CMake cannot install the DLL files from the imported library targets before version 3.21.
+    # Just extract the dll file path from the target properties and install it as a regular file.
+    if (WIN32)
+        get_target_property(cutensor_dll CUDA::cutensor IMPORTED_LOCATION)
+        install(FILES ${cutensor_dll}
+            DESTINATION ${CUTENSOR_EXAMPLES_INSTALL_PREFIX}/bin
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+        )
+    endif()
 
     add_dependencies(${GROUP_TARGET} ${EXAMPLE_TARGET})
 endfunction()
 
-add_custom_target(cutensor_examples)
+add_custom_target(cutensor-examples)
 
-add_cutensor_example(cutensor_examples "cuTENSOR.example.einsum" einsum.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.contraction" contraction.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.contraction_autotuning" contraction_autotuning.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.contraction_simple" contraction_simple.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.contraction_plan_cache" contraction_plan_cache.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.elementwise_binary" elementwise_binary.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.elementwise_permute" elementwise_permute.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.elementwise_trinary" elementwise_trinary.cu)
-add_cutensor_example(cutensor_examples "cuTENSOR.example.reduction" reduction.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.einsum" einsum.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.contraction" contraction.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.contraction_autotuning" contraction_autotuning.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.contraction_simple" contraction_simple.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.contraction_plan_cache" contraction_plan_cache.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.elementwise_binary" elementwise_binary.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.elementwise_permute" elementwise_permute.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.elementwise_trinary" elementwise_trinary.cu)
+add_cutensor_example(cutensor-examples "cuTENSOR.example.reduction" reduction.cu)

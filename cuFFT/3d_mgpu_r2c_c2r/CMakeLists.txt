@@ -103,8 +103,8 @@ install(
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
 )
 
-if (NOT TARGET cufft_examples)
-    add_custom_target(cufft_examples)
+if (NOT TARGET cufft-examples)
+    add_custom_target(cufft-examples)
 endif()
 
-add_dependencies(cufft_examples ${ROUTINE}_example)
+add_dependencies(cufft-examples ${ROUTINE}_example)

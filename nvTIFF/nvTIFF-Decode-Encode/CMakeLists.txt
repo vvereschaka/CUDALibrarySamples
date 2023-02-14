@@ -84,4 +84,4 @@ if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
-add_nvtiff_example(nvtiff_examples ${PROJECT_NAME} "nvtiff_example.cu;nvTiff_utils.cpp")
+add_nvtiff_example(nvtiff-examples ${PROJECT_NAME} "nvtiff_example.cu;nvTiff_utils.cpp")

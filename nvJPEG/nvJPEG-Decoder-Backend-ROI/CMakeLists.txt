@@ -30,4 +30,4 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 # NOTE: add_nvjpeg_example will add a reference to Threads::Threads 
 # if a proper thread library gets existed.
-add_nvjpeg_example(jpeg_examples "${PROJECT_NAME}" nvJPEGROIDecode.cpp)
+add_nvjpeg_example(nvjpeg-examples "${PROJECT_NAME}" nvJPEGROIDecode.cpp)

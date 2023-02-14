@@ -84,8 +84,8 @@ install(
     DESTINATION ${NPP_EXAMPLES_INSTALL_PREFIX}
 )
 
-if (NOT TARGET npp_examples)
-    add_custom_target(npp_examples)
+if (NOT TARGET npp-examples)
+    add_custom_target(npp-examples)
 endif()
 
-add_dependencies(npp_examples ${ROUTINE}_example)
+add_dependencies(npp-examples ${ROUTINE}_example)

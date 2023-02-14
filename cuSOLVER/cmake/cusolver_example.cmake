@@ -94,7 +94,7 @@ function(add_cusolver_example EXAMPLE_NAME EXAMPLE_SOURCES)
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
-    if (TARGET cusolver_examples)
-        add_dependencies(cusolver_examples ${EXAMPLE_NAME})
+    if (TARGET cusolver-examples)
+        add_dependencies(cusolver-examples ${EXAMPLE_NAME})
     endif()
 endfunction()

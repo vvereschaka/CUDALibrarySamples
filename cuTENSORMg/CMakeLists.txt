@@ -124,11 +124,25 @@ function(add_cutensormg_example GROUP_TARGET EXAMPLE_NAME EXAMPLE_SOURCES)
         DESTINATION ${CUTENSORMG_EXAMPLES_INSTALL_PREFIX}/bin
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
+    # CMake cannot install the DLL files from the imported library targets before version 3.21.
+    # Just extract the dll file path from the target properties and install it as a regular file.
+    if (WIN32)
+        get_target_property(cutensor_dll CUDA::cutensor IMPORTED_LOCATION)
+        install(FILES ${cutensor_dll}
+            DESTINATION ${CUTENSORMG_EXAMPLES_INSTALL_PREFIX}/bin
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+        )
+        get_target_property(cutensorMg_dll CUDA::cutensorMg IMPORTED_LOCATION)
+        install(FILES ${cutensorMg_dll}
+            DESTINATION ${CUTENSORMG_EXAMPLES_INSTALL_PREFIX}/bin
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+        )
+    endif()
 
     add_dependencies(${GROUP_TARGET} ${EXAMPLE_TARGET})
 endfunction()
 
-add_custom_target(cutensormg_examples)
+add_custom_target(cutensormg-examples)
 
-add_cutensormg_example(cutensormg_examples "cuTENSORMg.example.contraction_multi_gpu" contraction_multi_gpu.cu)
-add_cutensormg_example(cutensormg_examples "cuTENSORMg.example.blog_post" blog_post.cu)
+add_cutensormg_example(cutensormg-examples "cuTENSORMg.example.contraction_multi_gpu" contraction_multi_gpu.cu)
+add_cutensormg_example(cutensormg-examples "cuTENSORMg.example.blog_post" blog_post.cu)

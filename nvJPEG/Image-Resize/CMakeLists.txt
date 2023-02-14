@@ -27,4 +27,4 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
 
-add_nvjpeg_example(jpeg_examples "${PROJECT_NAME}" imageResize.cpp)
+add_nvjpeg_example(nvjpeg-examples "${PROJECT_NAME}" imageResize.cpp)

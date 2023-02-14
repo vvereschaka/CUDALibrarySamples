@@ -84,8 +84,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     if (proj STREQUAL "cuBLAS")
         include(${proj}/cmake/cublas_example.cmake)
 
-        if (NOT TARGET cublas_examples)
-            add_custom_target(cublas_examples)
+        if (NOT TARGET cublas-examples)
+            add_custom_target(cublas-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -108,8 +108,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     if (proj STREQUAL "cuBLASLt")
         include(${proj}/cmake/cublaslt_example.cmake)
 
-        if (NOT TARGET cublaslt_examples)
-            add_custom_target(cublaslt_examples)
+        if (NOT TARGET cublaslt-examples)
+            add_custom_target(cublaslt-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -124,8 +124,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "cuFFT")
-        if (NOT TARGET cufft_examples)
-            add_custom_target(cufft_examples)
+        if (NOT TARGET cufft-examples)
+            add_custom_target(cufft-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -134,8 +134,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "cuRAND")
-        if (NOT TARGET curand_examples)
-            add_custom_target(curand_examples)
+        if (NOT TARGET curand-examples)
+            add_custom_target(curand-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -149,8 +149,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
         # cuSOLVER example helpers
         include(${proj}/cmake/cusolver_example.cmake)
 
-        if (NOT TARGET cusolver_examples)
-            add_custom_target(cusolver_examples)
+        if (NOT TARGET cusolver-examples)
+            add_custom_target(cusolver-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -161,8 +161,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "cuSPARSE")
-        if (NOT TARGET cusparse_examples)
-            add_custom_target(cusparse_examples)
+        if (NOT TARGET cusparse-examples)
+            add_custom_target(cusparse-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -175,8 +175,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "cuSPARSELt")
-        if (NOT TARGET cusparse_examples)
-            add_custom_target(cusparse_examples)
+        if (NOT TARGET cusparse-examples)
+            add_custom_target(cusparse-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -193,8 +193,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
 
     #NOTE: MSVC is not supported yet.
     if (NOT MSVC AND proj STREQUAL "MathDx")
-        if (NOT TARGET mathdx_examples)
-            add_custom_target(mathdx_examples)
+        if (NOT TARGET mathdx-examples)
+            add_custom_target(mathdx-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -204,8 +204,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "NPP")
-        if (NOT TARGET npp_examples)
-            add_custom_target(npp_examples)
+        if (NOT TARGET npp-examples)
+            add_custom_target(npp-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -217,8 +217,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "nvJPEG")
-        if (NOT nvjpeg_examples)
-            add_custom_target(nvjpeg_examples)
+        if (NOT nvjpeg-examples)
+            add_custom_target(nvjpeg-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -233,8 +233,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     if (proj STREQUAL "nvJPEG2000")
         find_package(nvJPEG2000 REQUIRED)
 
-        if (NOT nvjpeg2000_examples)
-            add_custom_target(nvjpeg2000_examples)
+        if (NOT nvjpeg2000-examples)
+            add_custom_target(nvjpeg2000-examples)
         endif()
 
         add_cuda_examples(${proj}
@@ -246,8 +246,8 @@ foreach(proj ${CUDA_ENABLE_EXAMPLE_PROJECTS})
     endif()
 
     if (proj STREQUAL "nvTIFF")
-        if (NOT nvtiff_examples)
-            add_custom_target(nvtiff_examples)
+        if (NOT nvtiff-examples)
+            add_custom_target(nvtiff-examples)
         endif()
 
         add_cuda_examples(${proj}

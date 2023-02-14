@@ -72,7 +72,7 @@ set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS} -O0 -g -lineinfo")
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/curand_example.cmake)
 
 # ADD 3 ROUTINES for uniform, normal, & lognormal
-add_curand_example(curand_examples "curand_${ROUTINE1}_example" curand_${ROUTINE1}_example.cpp)
-add_curand_example(curand_examples "curand_${ROUTINE2}_example" curand_${ROUTINE2}_example.cpp)
-add_curand_example(curand_examples "curand_${ROUTINE3}_example" curand_${ROUTINE3}_example.cpp)
-add_curand_example(curand_examples "curand_${ROUTINE4}_example" curand_${ROUTINE4}_example.cpp)
+add_curand_example(curand-examples "curand_${ROUTINE1}_example" curand_${ROUTINE1}_example.cpp)
+add_curand_example(curand-examples "curand_${ROUTINE2}_example" curand_${ROUTINE2}_example.cpp)
+add_curand_example(curand-examples "curand_${ROUTINE3}_example" curand_${ROUTINE3}_example.cpp)
+add_curand_example(curand-examples "curand_${ROUTINE4}_example" curand_${ROUTINE4}_example.cpp)

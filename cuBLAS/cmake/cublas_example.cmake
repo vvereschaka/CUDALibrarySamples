@@ -74,7 +74,7 @@ function(add_cublas_example EXAMPLE_NAME EXAMPLE_SOURCES)
         POSITION_INDEPENDENT_CODE ON
     )
 
-    # Install example
+    # Install example.
     install(
         TARGETS ${EXAMPLE_NAME}
         RUNTIME
@@ -82,7 +82,7 @@ function(add_cublas_example EXAMPLE_NAME EXAMPLE_SOURCES)
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
-    if (TARGET cublas_examples)
-        add_dependencies(cublas_examples ${EXAMPLE_NAME})
+    if (TARGET cublas-examples)
+        add_dependencies(cublas-examples ${EXAMPLE_NAME})
     endif()
 endfunction()

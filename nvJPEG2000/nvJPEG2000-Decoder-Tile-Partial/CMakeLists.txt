@@ -30,4 +30,4 @@ if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
-add_nvjpeg2000_example(nvjpeg2000_examples ${PROJECT_NAME} nvj2k_DecodeTilePartial.cpp)
+add_nvjpeg2000_example(nvjpeg2000-examples ${PROJECT_NAME} nvj2k_DecodeTilePartial.cpp)

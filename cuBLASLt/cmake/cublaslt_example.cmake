@@ -89,7 +89,7 @@ function(add_cublaslt_example EXAMPLE_NAME)
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
     )
 
-    if (TARGET cublaslt_examples)
-        add_dependencies(cublaslt_examples ${EXAMPLE_NAME})
+    if (TARGET cublaslt-examples)
+        add_dependencies(cublaslt-examples ${EXAMPLE_NAME})
     endif()
 endfunction()
