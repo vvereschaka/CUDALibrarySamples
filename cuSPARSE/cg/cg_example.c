@@ -131,6 +131,15 @@ void mtx_header(const char* file_path,
     fclose(file);
 }
 
+typedef struct IdxType {
+    int    row, col;
+    double val;
+} Idx;
+
+int sort_by_row(const void *a, const void *b) {
+    return ((Idx*) a)->row - ((Idx*) b)->row;
+}
+
 void mtx_parsing(const char* file_path,
                  int         num_lines,
                  int         num_rows,
@@ -139,13 +148,6 @@ void mtx_parsing(const char* file_path,
                  int*        columns,
                  double*     values,
                  int         base) {
-    typedef struct IdxType {
-        int    row, col;
-        double val;
-    } Idx;
-    int sort_by_row(const void *a, const void *b) {
-        return ((Idx*) a)->row - ((Idx*) b)->row;
-    }
     char buffer[256];
     FILE* file = fopen(file_path, "r");
     while (fgetc(file) == '%')
